@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+      
+</head>
+<body>
+    <h1>Orbit calculator</h1>
+    <p>Enter the position and velocity of the object in the Cartesian coordinate system to calculate the orbit.</p>
+    <br>
+    <p><a href="https://github.com/phong765/Orbit-calculator.git" target="_blank">Link to repository</a></p>
+    <div id="input-container">
+        <p id="Instruction">Enter x position in meters:</p>
+        <input type="number" id="x_position" placeholder="Enter x position in meters" value="7000000">
+    
+        <p id="Instruction">Enter y position in meters:</p>
+        <input type="number" id="y_position" placeholder="Enter y position in meters" value="0">
+    
+        <p id="Instruction">Enter z position in meters:</p>
+        <input type="number" id="z_position" placeholder="Enter z position in meters" value="0">
+    
+        <p id="Instruction">Enter x velocity in meters/second:</p>
+        <input type="number" id="x_velocity" placeholder="Enter x velocity in meters/second" value="0">
+    
+        <p id="Instruction">Enter y velocity in meters/second:</p>
+        <input type="number" id="y_velocity" placeholder="Enter y velocity in meters/second" value="7500">
+    
+        <p id="Instruction">Enter z velocity in meters/second:</p>
+        <input type="number" id="z_velocity" placeholder="Enter z velocity in meters/second" value="3000">
+    </div><div id="output">
+
+    </div>
+
+    <div id="output-image">
+
+    </div>
+    <br><br>
+    
+    <button id="calculateButton" py-click="calculation">Calculate Orbit</button>
+    
+    
+
+    <script type="py" config='{"packages": ["matplotlib", "numpy"]}'>
+       
+        from pyscript import document, display
+        import matplotlib.pyplot as plt    
+        import numpy as np
+
+        def calculation(event):
+           
+            position_x = float(document.querySelector("#x_position").value)
+            position_y = float(document.querySelector("#y_position").value)
+            position_z = float(document.querySelector("#z_position").value)
+            velocity_x = float(document.querySelector("#x_velocity").value)
+            velocity_y = float(document.querySelector("#y_velocity").value)
+            velocity_z = float(document.querySelector("#z_velocity").value)
+            
+            # Clear previous results from the output area
+            output_div = document.querySelector("#output")
+            output_div.innerHTML = ""
+
+            output_image_div = document.querySelector("#output-image")
+            output_image_div.innerHTML = ""
+
+            m = 1
+            G = 6.67430e-11
+            M = 5.972e24
+            orb = 0
+            perigee_above = 0
+
+            position_vector = np.array([position_x, position_y, position_z])
+            velocity_vector = np.array([velocity_x, velocity_y, velocity_z])
+            
+            # Formulate mathematical calculations
+            orbit_energy = 0.5 * m * (np.linalg.norm(velocity_vector))**2 - ((G * m * M) / np.linalg.norm(position_vector))
+            specific_angular_momentum = (np.cross(position_vector, velocity_vector))
+
+            eccentricity = np.sqrt(1 + (2 * orbit_energy * (np.linalg.norm(specific_angular_momentum))**2) / (m * G**2 * M**2))
+            
+            theta = np.linspace(0, 2 * np.pi, 100)
+            r = (np.linalg.norm(specific_angular_momentum)**2 / ((G * M)) / ((1 + eccentricity * np.cos(theta))))
+            x = (r * np.cos(theta)) / 1000
+            y = (r * np.sin(theta)) / 1000
+            x_earth = 6371 * np.cos(theta)
+            y_earth = 6371 * np.sin(theta)
+
+            orbital_inclination = np.dot(specific_angular_momentum, [0, 0, 1]) / (np.linalg.norm(specific_angular_momentum))
+            orb = np.arccos(orbital_inclination)
+            apogee = (np.linalg.norm(specific_angular_momentum)**2 / (G * M)) / (1 - eccentricity)
+            perigee = (np.linalg.norm(specific_angular_momentum)**2 / (G * M)) / (1 + eccentricity)
+            
+            cos_anomaly = (np.linalg.norm(specific_angular_momentum)**2 / (G * M * np.linalg.norm(position_vector)) - 1) / eccentricity
+            
+            perigee_text = ""
+            if cos_anomaly < 0:
+                if position_vector[2] > 0:
+                    perigee_text = "Perigee is above the equatorial plane"
+                    perigee_above = 1
+                elif position_vector[2] < 0:
+                    perigee_text = "Perigee is below the equatorial plane"
+                    perigee_above = 0
+            elif cos_anomaly > 0:
+                if position_vector[2] > 0:
+                    perigee_text = "Apogee is above the equatorial plane"
+                    perigee_above = 0
+                elif position_vector[2] < 0:
+                    perigee_text = "Apogee is below the equatorial plane"
+                    perigee_above = 1
+
+            # Compile text metrics together to render dynamically on the screen
+            stats_text = f"""
+            <b>--- Orbit Calculations ---</b>
+            Eccentricity: {eccentricity:.4f}
+            Orbital Inclination: {np.abs(np.degrees(orb)):.2f}°
+            Apogee: {apogee/1000:.2f} km
+            Perigee: {perigee/1000:.2f} km
+            {perigee_text}
+            \n
+            """
+            output_div.innerHTML = stats_text
+
+            # Matplotlib Visual plotting block
+            fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+            if perigee_above == 1:
+                x_line = np.linspace(-1 * apogee / 1000 * np.abs(orbital_inclination), perigee / 1000 * np.abs(orbital_inclination), 1000)
+            elif perigee_above == 0:
+                x_line = np.linspace(-1 * perigee / 1000 * np.abs(orbital_inclination), apogee / 1000 * np.abs(orbital_inclination), 1000)
+            y_line = np.abs(np.tan(orb)) * x_line   
+
+            ax[0].plot(x, y, color="red", label="Orbit")
+            ax[0].plot(x_earth, y_earth, color="blue", label="Earth")
+            ax[1].plot(x_earth, y_earth, color="blue")
+            ax[1].plot(x_line, y_line, color="red")
+            ax[1].axhline(y=0, color="green", linestyle="--")
+            ax[0].set_title('Orbit Path')
+            ax[0].set_xlabel('X (km)')
+            ax[0].set_ylabel('Y (km)')
+            ax[1].set_title('Inclination Axis')
+            ax[1].set_xlabel('X (km)')
+            ax[1].set_ylabel('Y (km)')
+            ax[0].set_aspect('equal', adjustable='datalim')
+            ax[1].set_aspect('equal', adjustable='datalim')
+            
+            if orbital_inclination > 0:
+                ax[0].text(0, 0, "Prograde Orbit", fontsize=8, ha='center')
+            elif orbital_inclination < 0:
+                ax[0].text(0, 0, "Retrograde Orbit", fontsize=8, ha='center')
+            elif orbital_inclination == 0:
+                ax[0].text(0, 0, "Perpendicular/Equatorial", fontsize=8, ha='center')
+            
+            plt.grid(True)
+            
+            display(fig, target="output-image")
+    </script>
+</body>
+</html>
