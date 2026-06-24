@@ -18,7 +18,6 @@ def calculation(position_x,position_y,position_z,velocity_x,velocity_y,velocity_
     specific_angular_momentum=(np.cross(position_vector,velocity_vector))
 
     print("Specific Angular Momentum:", specific_angular_momentum)
-    print("G*M:", G*M)
 
     eccentricity=np.sqrt(1+(2*orbit_energy*(np.linalg.norm(specific_angular_momentum))**2)/(m*G**2*M**2))
     #data check
@@ -99,5 +98,4 @@ def calculation(position_x,position_y,position_z,velocity_x,velocity_y,velocity_
 
 
 calculation(8771000,0,1000000,1000,np.sqrt(G*M/6771000),0)
-
 
