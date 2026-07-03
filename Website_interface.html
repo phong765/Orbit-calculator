@@ -25,11 +25,15 @@
             Inclinations of 90° indicate a polar orbit.
         </p>
         <p>
+            Line of Apsides: The line connecting the closest and farthest points of the orbit (perigee and apogee). It represents the orientation of the orbit's longest axis in space.
+        </p>
+        <p>
             Apogee: The maximum distance from the Earth's center.
         </p>
         <p>
             Perigee: The minimum distance from the Earth's center.
         </p>
+        <p>Thank you for using the website!</p>
     </div>
     <div id="input-container">
         <p id="Instruction">Enter x position in meters:</p>
@@ -49,24 +53,28 @@
     
         <p id="Instruction">Enter z velocity in meters/second:</p>
         <input type="number" id="z_velocity" placeholder="Enter z velocity in meters/second" value="3000">
-    </div><div id="output">
+    </div>
+    <div id="output">
 
     </div>
 
     <div id="output-image">
 
     </div>
-    <p align="center" id="note">Note: this is a rough approximation that ignores atmospheric drag and other perturbations.</p>
-    <p align="center">The blue line represents the Earth.</p>
-    <p align="center">The red line represents the orbit of the object.</p>
-    <p align="center">The green dashed line represents the equatorial plane of the Earth.</p>
+    <div id="footer">
+        
+    </div>
+
     
-    <button id="calculateButton" py-click="calculation" onclick="scrollToNote()">Calculate Orbit</button>
+    <button id="calculateButton" py-click="calculation" onclick="scrollToOutput()">Calculate Orbit</button>
     
     
     <script>
-        function scrollToNote() {
-            const noteDiv = document.getElementById("note");
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function scrollToOutput() {
+            await delay(1); 
+            const noteDiv = document.getElementById("output");
             noteDiv.scrollIntoView({ behavior: "smooth" });
         }
     </script>
@@ -79,112 +87,176 @@
         import matplotlib.pyplot as plt    
         import numpy as np
 
+
+
         def calculation(event):
-           
+
+            # ==========================================
+            # 1. DOM SELECTORS & DATA EXTRACTION
+            # ==========================================
             position_x = float(document.querySelector("#x_position").value)
             position_y = float(document.querySelector("#y_position").value)
             position_z = float(document.querySelector("#z_position").value)
+
             velocity_x = float(document.querySelector("#x_velocity").value)
             velocity_y = float(document.querySelector("#y_velocity").value)
             velocity_z = float(document.querySelector("#z_velocity").value)
-            
-            # Clear previous results from the output area
-            output_div = document.querySelector("#output")
-            output_div.innerHTML = ""
 
+            output_div = document.querySelector("#output")
+            footer_div = document.querySelector("#footer")
             output_image_div = document.querySelector("#output-image")
+
+            # Clear previous UI results
+            output_div.innerHTML = ""
+            footer_div.innerHTML = ""
             output_image_div.innerHTML = ""
 
-            m = 1
-            G = 6.67430e-11
-            M = 5.972e24
-            orb = 0
-            perigee_above = 0
+            # ==========================================
+            # 2. PHYSICAL CONSTANTS & CORE ARRAYS
+            # ==========================================
+            m = 1              # Object mass (kg)
+            G = 6.67430e-11    # Gravitational constant (m^3 kg^-1 s^-2)
+            M = 5.972e24       # Earth mass (kg)
+            R_earth = 6371     # Earth radius (km)
 
             position_vector = np.array([position_x, position_y, position_z])
             velocity_vector = np.array([velocity_x, velocity_y, velocity_z])
-            
-            # Formulate mathematical calculations
-            orbit_energy = 0.5 * m * (np.linalg.norm(velocity_vector))**2 - ((G * m * M) / np.linalg.norm(position_vector))
-            specific_angular_momentum = (np.cross(position_vector, velocity_vector))
 
-            eccentricity = np.sqrt(1 + (2 * orbit_energy * (np.linalg.norm(specific_angular_momentum))**2) / (m * G**2 * M**2))
-            
-            theta = np.linspace(0, 2 * np.pi, 10000)
-            r = (np.linalg.norm(specific_angular_momentum)**2 / ((G * M)) / ((1 + eccentricity * np.cos(theta))))
-            x = (r * np.cos(theta)) / 1000
-            y = (r * np.sin(theta)) / 1000
-            x_earth = 6371 * np.cos(theta)
-            y_earth = 6371 * np.sin(theta)
+            r_norm = np.linalg.norm(position_vector)
+            v_norm = np.linalg.norm(velocity_vector)
 
-            orbital_inclination = np.dot(specific_angular_momentum, [0, 0, 1]) / (np.linalg.norm(specific_angular_momentum))
+            perigee_above=0
+
+            # ==========================================
+            # 3. ORBITAL MECHANICS MATH CALCULATIONS
+            # ==========================================
+            # Fundamental Vectors & Elements
+            orbit_energy = 0.5 * m * (v_norm ** 2) - ((G * m * M) / r_norm)
+            specific_angular_momentum = np.cross(position_vector, velocity_vector)
+            h_norm = np.linalg.norm(specific_angular_momentum)
+
+            eccen_vector = np.cross(velocity_vector, specific_angular_momentum) / (G * M) - (m * position_vector / r_norm)
+            eccen_horizontal = np.array([eccen_vector[0], eccen_vector[1], 0])
+            eccentricity = np.linalg.norm(eccen_vector)
+
+            orbital_inclination = np.dot(specific_angular_momentum, [0, 0, 1]) / h_norm
             orb = np.arccos(orbital_inclination)
-            apogee = (np.linalg.norm(specific_angular_momentum)**2 / (G * M)) / (1 - eccentricity)
-            perigee = (np.linalg.norm(specific_angular_momentum)**2 / (G * M)) / (1 + eccentricity)
+
+            # Apogee and Perigee
+            apogee = (h_norm ** 2 / (G * M)) / (1 - eccentricity)
+            perigee = (h_norm ** 2 / (G * M)) / (1 + eccentricity)
+
+            cos_anomaly = (h_norm ** 2 / (G * M * r_norm) - 1) / eccentricity
+
+        
+
+            # Orbit Profile Generation
+            theta = np.linspace(0, 2 * np.pi, 10000)
+            r_orbit = (h_norm ** 2 / (G * M)) / (1 + eccentricity * np.cos(theta))
+
+            x = (r_orbit * np.cos(theta)) / 1000
+            y = (r_orbit * np.sin(theta)) / 1000
+
+            # Earth Boundaries Profile
+            x_earth = R_earth * np.cos(theta)
+            y_earth = R_earth * np.sin(theta)
+            x_karman = (R_earth + 100) * np.cos(theta)
+            y_karman = (R_earth + 100) * np.sin(theta)
+
+            # Inclination Projection Axis Line
+            x_line = np.linspace(-10000, 10000, 1000)
+            y_line = np.abs(np.tan(orb)) * x_line
             
-            cos_anomaly = (np.linalg.norm(specific_angular_momentum)**2 / (G * M * np.linalg.norm(position_vector)) - 1) / eccentricity
             
+            # Apsides projection line
+            x_apsides = np.linspace(-apogee/1000, perigee/1000, 1000)
+            y_apsides = eccen_vector[2] / np.linalg.norm(eccen_horizontal) * x_apsides
+
+
+            # ==========================================
+            # 4. EXCEPTION & WARNING HANDLING
+            # ==========================================
             perigee_text = ""
-            if cos_anomaly < 0:
-                if position_vector[2] > 0:
-                    perigee_text = "Perigee is above the equatorial plane"
-                    perigee_above = 1
-                elif position_vector[2] < 0:
-                    perigee_text = "Perigee is below the equatorial plane"
-                    perigee_above = 0
-            elif cos_anomaly > 0:
-                if position_vector[2] > 0:
-                    perigee_text = "Apogee is above the equatorial plane"
-                    perigee_above = 0
-                elif position_vector[2] < 0:
-                    perigee_text = "Apogee is below the equatorial plane"
-                    perigee_above = 1
+            if 0 <= perigee < 6471000:
+                if perigee < 6371000:
+                    perigee_text = "Warning: Perigee is below the Earth's surface. The object will collide with the Earth."
+                else:
+                    perigee_text = "Warning: Perigee is below the Kármán line (100 km). The object will enter the Earth's atmosphere."
 
-            # Compile text metrics together to render dynamically on the screen
+            if perigee < 0 or apogee < 0:
+                perigee_text = "Warning: The orbit is not valid. The object will escape the Earth's gravity."
+
+            # ==========================================
+            # 5. DYNAMIC UI RENDERING (HTML)
+            # ==========================================
             stats_text = f"""
-            <b>--- Orbit Calculations ---</b>
-            Eccentricity: {eccentricity:.4f}
-            Orbital Inclination: {np.abs(np.degrees(orb)):.2f}°
-            Apogee: {apogee/1000:.2f} km
-            Perigee: {perigee/1000:.2f} km
-            {perigee_text}
-            \n
+            <b>--- Orbit Calculation results ---</b><br>
+            Eccentricity: {eccentricity:.4f}<br>
+            Orbital Inclination: {np.abs(np.degrees(orb)):.2f}°<br>
+            Line of Apsides angle: {np.degrees(np.arctan2(eccen_vector[2], np.linalg.norm(eccen_horizontal))):.2f}°<br>
+            Apogee: {apogee/1000:.2f} km<br>
+            Perigee: {perigee/1000:.2f} km<br>
+            <br>
+            <span style='color: #ff3333;'>{perigee_text}</span>
             """
-            output_div.innerHTML = stats_text
+            output_div.innerHTML = stats_text.strip()
 
-            # Matplotlib Visual plotting block
-            fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+            footer_text = """
+            The blue line represents the Earth's surface.<br>
+            The red line represents the object's orbit.<br>
+            The dashed cyan line represents the Kármán Line — the boundary between Earth's atmosphere and outer space.<br>
+            The dashed green line represents the Earth's equatorial plane.<br><br>
+            <i>The result is an approximation and does not account for influences from other bodies, aerodynamic drag, and other perturbations.</i>
+            """
+            footer_div.innerHTML = footer_text.strip()
 
-            if perigee_above == 1:
-                x_line = np.linspace(-1 * apogee / 1000 * np.abs(orbital_inclination), perigee / 1000 * np.abs(orbital_inclination), 1000)
-            elif perigee_above == 0:
-                x_line = np.linspace(-1 * perigee / 1000 * np.abs(orbital_inclination), apogee / 1000 * np.abs(orbital_inclination), 1000)
-            y_line = np.abs(np.tan(orb)) * x_line   
+            # ==========================================
+            # 6. VISUAL PLOTTING LAYER (MATPLOTLIB)
+            # ==========================================
+            fig, ax = plt.subplots(3, 1, figsize=(10, 10), constrained_layout=True)
 
+            # Top Plot: Orbit Path Map
             ax[0].plot(x, y, color="red", label="Orbit")
             ax[0].plot(x_earth, y_earth, color="blue", label="Earth")
-            ax[1].plot(x_earth, y_earth, color="blue")
-            ax[1].plot(x_line, y_line, color="red")
-            ax[1].axhline(y=0, color="green", linestyle="--")
+            ax[0].plot(x_karman, y_karman, color="cyan", linestyle="--", label="Kármán line (100 km)")
             ax[0].set_title('Orbit Path')
             ax[0].set_xlabel('X (km)')
             ax[0].set_ylabel('Y (km)')
-            ax[1].set_title('Inclination Axis')
+            ax[0].set_aspect('equal', adjustable='datalim')
+            ax[0].grid(True)
+
+            # Direction Overlay Info Box
+            if orbital_inclination > 0:
+                ax[0].text(0, 0, "Prograde Orbit", fontsize=8, ha='center', weight='bold')
+            elif orbital_inclination < 0:
+                ax[0].text(0, 0, "Retrograde Orbit", fontsize=8, ha='center', weight='bold')
+            else:
+                ax[0].text(0, 0, "Equatorial Orbit", fontsize=8, ha='center', weight='bold')
+
+            # Middle Plot: Inclination Angle Plane Cross-Section
+            ax[1].plot(x_earth, y_earth, color="blue")
+            ax[1].plot(x_line, y_line, color="red")
+            ax[1].axhline(y=0, color="green", linestyle="--")
+            ax[1].set_title('Inclination Plane')
             ax[1].set_xlabel('X (km)')
             ax[1].set_ylabel('Y (km)')
-            ax[0].set_aspect('equal', adjustable='datalim')
             ax[1].set_aspect('equal', adjustable='datalim')
-            
-            if orbital_inclination > 0:
-                ax[0].text(0, 0, "Prograde Orbit", fontsize=8, ha='center')
-            elif orbital_inclination < 0:
-                ax[0].text(0, 0, "Retrograde Orbit", fontsize=8, ha='center')
-            elif orbital_inclination == 0:
-                ax[0].text(0, 0, "Perpendicular/Equatorial", fontsize=8, ha='center')
-            
-            plt.grid(True)
-            
+            ax[1].grid(True)
+
+            # Bottom Plot: Eccentricity Vector
+            ax[2].plot(x_earth, y_earth, color="blue")
+            ax[2].plot(x_apsides, y_apsides, color="red", label="Line of Apsides")
+            ax[2].set_title('Line of Apsides Projection')
+            ax[2].set_xlabel('X (km)')
+            ax[2].set_ylabel('Y (km)')
+            ax[2].axhline(y=0, color="green", linestyle="--")
+            ax[2].set_aspect('equal', adjustable='datalim')
+            ax[2].grid(True)
+            # Display Render to PyScript UI Wrapper
             display(fig, target="output-image")
+        
+           
+            
     </script>
 </body>
 </html>
