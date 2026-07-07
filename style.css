@@ -36,12 +36,54 @@ input
     padding: 5px;
     width: 250px;
 }
+
 #output 
 {
     top: 100px;
     right: 10px;
     margin-top: 20px;
     white-space: pre-line; /* Keeps text linebreaks clean */
+    font-family: monospace;
+    padding: 10px;
+    align-items: center;
+    border-radius: 10px;
+    width: 300px;
+}
+.clicked_output
+{
+    top: 100px;
+    right: 10px;
+    margin-top: 20px;
+    white-space: pre-line; /* Keeps text linebreaks clean */
+    font-family: monospace;
+    padding: 10px;
+    align-items: center;
+    border-radius: 10px;
+    width: 300px;
+    background-color:rgb(0, 0, 89);
+}
+.clicked_output_image
+{
+    max-width: 800px;  
+    margin: 0 auto;    
+    top: 260px;
+    right: 10px;
+    background-color:rgb(0, 0, 89);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.clicked_output_image img
+{
+    width: 100%;       
+    height: auto;    
+    align-items: center;  
+}
+.clicked_footer
+{
+    position:absolute;
+    top:950px;
+    white-space: pre-line; 
     font-family: monospace;
     background-color: rgb(0, 0, 89);
     padding: 10px;
@@ -54,7 +96,6 @@ input
     margin: 0 auto;    
     top: 260px;
     right: 10px;
-    background-color:rgb(0, 0, 89);
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -75,6 +116,18 @@ input
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 300px;
     margin-bottom: 40px;
+}
+#footer
+{
+    position:absolute;
+    top:950px;
+    white-space: pre-line; 
+    font-family: monospace;
+    padding: 10px;
+    align-items: center;
+    border-radius: 10px;
+    width: 300px;
+    
 }
 #calculateButton
 {
