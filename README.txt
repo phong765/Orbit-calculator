@@ -1,4 +1,4 @@
-# Orbit-calculator
+Orbit-calculator
 
 A program that uses a satellite's velocity and position to calculate its orbit
 
