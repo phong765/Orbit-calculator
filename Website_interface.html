@@ -66,19 +66,24 @@
     </div>
 
     
-    <button id="calculateButton" py-click="calculation" onclick="scrollToOutput()">Calculate Orbit</button>
+    <button id="calculateButton" py-click="calculation" onclick="Click()">Calculate Orbit</button>
     
     
     <script>
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-        async function scrollToOutput() {
-            await delay(1); 
-            const noteDiv = document.getElementById("output");
-            noteDiv.scrollIntoView({ behavior: "smooth" });
+        const calculateButton = document.getElementById("calculateButton");
+        const outputDiv = document.getElementById("output");
+        const outputImageDiv = document.getElementById("output-image");
+        const footerDiv = document.getElementById("footer");
+        async function Click() {
+            outputDiv.classList.add("clicked_output");
+            outputImageDiv.classList.add("clicked_output_image");
+            footerDiv.classList.add("clicked_footer");
+            await delay(1);
+            outputDiv.scrollIntoView({ behavior: 'smooth' });   
         }
+
     </script>
-    <br id="target">
 
 
     <script type="py" config='{"packages": ["matplotlib", "numpy"]}'>
