@@ -13,7 +13,7 @@
     <div id="How">
         <h2>How to use this website:</h2>
         <p>
-            When you visit the website, wait a bit for the script to load, then enter the position and velocity values for the object in the input fields above. For the positions, please note that they are relative to the Earth's center. Then click "Calculate Orbit" to see the results at the bottom of the page.
+            When you visit the website, wait a bit for the script to load, then choose the object you want to orbit around before entering the position and velocity values for the object in the input fields above. For the positions, please note that they are relative to the body's center. Then click "Calculate Orbit" to see the results at the bottom of the page.
 
         </p>
         <h2>How to read the results:</h2>
@@ -21,21 +21,38 @@
             Eccentricity: A measure of how much the orbit deviates from a perfect circle. An eccentricity of 0 indicates a circular orbit, while values closer to 1 indicate more elongated orbits.
         </p>
         <p>
-            Orbital Inclination: The angle between the orbital plane and the equatorial plane of the Earth. It indicates how tilted the orbit is relative to the Earth's equator.An inclination less than 90° indicates a prograde orbit (same direction as Earth's rotation), while an inclination greater than 90° indicates a retrograde orbit (opposite direction to Earth's rotation).
+            Orbital Inclination: The angle between the orbital plane and the equatorial plane of the orbited body. It indicates how tilted the orbit is relative to the body's equator. An inclination less than 90° indicates a prograde orbit (same direction as the body's rotation), while an inclination greater than 90° indicates a retrograde orbit (opposite direction to the body's rotation).
             Inclinations of 90° indicate a polar orbit.
         </p>
         <p>
             Line of Apsides: The line connecting the closest and farthest points of the orbit (perigee and apogee). It represents the orientation of the orbit's longest axis in space.
         </p>
         <p>
-            Apogee: The maximum distance from the Earth's center.
+            Apogee: The maximum distance from the orbited body's center.
         </p>
         <p>
-            Perigee: The minimum distance from the Earth's center.
+            Perigee: The minimum distance from the orbited body's center.
         </p>
         <p>Thank you for using the website!</p>
     </div>
     <div id="input-container">
+        <p id="Instruction">Orbited object: 
+        <select id="Orbited_objects" name="objects">
+            <option value="5.972e24" data-ra="6371">Earth</option>
+            <option value="7.342e22" data-ra="1737">Moon</option>
+            <option value="1.989e30" data-ra="696340">Sun</option>
+            <option value="3.301e23" data-ra="2439">Mercury</option>
+            <option value="4.867e24" data-ra="6051">Venus</option>
+            <option value="6.39e23" data-ra="3389">Mars</option>
+            <option value="1.898e27" data-ra="69911">Jupiter</option>
+            <option value="5.683e26" data-ra="58232">Saturn</option>
+            <option value="8.681e25" data-ra="25362">Uranus</option>
+            <option value="1.024e26" data-ra="24622">Neptune</option>
+            <option value="1.303e22" data-ra="1188">Pluto</option>
+        </select>
+        </p>
+        <input type="number" id="custom_mass" placeholder="Enter mass in kg" >
+        <input type="number" id="custom_radius" placeholder="Enter radius in kilometers" >
         <p id="Instruction">Enter x position in meters:</p>
         <input type="number" id="x_position" placeholder="Enter x position in meters" value="7000000">
     
@@ -75,6 +92,18 @@
         const outputDiv = document.getElementById("output");
         const outputImageDiv = document.getElementById("output-image");
         const footerDiv = document.getElementById("footer");
+        const orbitedObjectsSelect = document.getElementById("Orbited_objects");
+        const customMassInput = document.getElementById("custom_mass");
+        const customRadiusInput = document.getElementById("custom_radius");
+
+        if (orbitedObjectsSelect.value === "custom") {
+            customMassInput.style.display = "block";
+            customRadiusInput.style.display = "block";
+        } else {
+            customMassInput.style.display = "none";
+            customRadiusInput.style.display = "none";
+        }
+
         async function Click() {
             outputDiv.classList.add("clicked_output");
             outputImageDiv.classList.add("clicked_output_image");
@@ -82,7 +111,7 @@
             await delay(1);
             outputDiv.scrollIntoView({ behavior: 'smooth' });   
         }
-
+        
     </script>
 
 
@@ -91,6 +120,7 @@
         from pyscript import document, display
         import matplotlib.pyplot as plt    
         import numpy as np
+        from js import document
 
 
 
@@ -121,8 +151,23 @@
             # ==========================================
             m = 1              # Object mass (kg)
             G = 6.67430e-11    # Gravitational constant (m^3 kg^-1 s^-2)
-            M = 5.972e24       # Earth mass (kg)
-            R_earth = 6371     # Earth radius (km)
+            M = float(document.querySelector("#Orbited_objects").value)  # Mass of the orbited object (kg)
+
+            if M == 5.972e24:
+                R = 6371  # Default Earth radius in kilometers
+            elif M == 7.342e22:
+                R = 1737  # Default Moon radius in kilometers
+            elif M == 1.989e30:
+                R = 696340  # Default Sun radius in kilometers
+            elif M == 6.39e23:
+                R = 3389  # Default Mars radius in kilometers
+            elif M == 1.898e27:
+                R = 69911  # Default Jupiter radius in kilometers
+            elif M == 5.683e26:
+                R = 58232  # Default Saturn radius in kilometers
+
+
+
 
             position_vector = np.array([position_x, position_y, position_z])
             velocity_vector = np.array([velocity_x, velocity_y, velocity_z])
@@ -163,10 +208,10 @@
             y = (r_orbit * np.sin(theta)) / 1000
 
             # Earth Boundaries Profile
-            x_earth = R_earth * np.cos(theta)
-            y_earth = R_earth * np.sin(theta)
-            x_karman = (R_earth + 100) * np.cos(theta)
-            y_karman = (R_earth + 100) * np.sin(theta)
+            x_earth = R * np.cos(theta)
+            y_earth = R * np.sin(theta)
+            x_karman = (R + 100) * np.cos(theta)
+            y_karman = (R + 100) * np.sin(theta)
 
             # Inclination Projection Axis Line
             x_line = np.linspace(-10000, 10000, 1000)
@@ -182,8 +227,8 @@
             # 4. EXCEPTION & WARNING HANDLING
             # ==========================================
             perigee_text = ""
-            if 0 <= perigee < 6471000:
-                if perigee < 6371000:
+            if 0 <= perigee < (R * 1000 + 100000):
+                if perigee < R * 1000:
                     perigee_text = "Warning: Perigee is below the Earth's surface. The object will collide with the Earth."
                 else:
                     perigee_text = "Warning: Perigee is below the Kármán line (100 km). The object will enter the Earth's atmosphere."
@@ -201,8 +246,7 @@
             Line of Apsides angle: {np.degrees(np.arctan2(eccen_vector[2], np.linalg.norm(eccen_horizontal))):.2f}°<br>
             Apogee: {apogee/1000:.2f} km<br>
             Perigee: {perigee/1000:.2f} km<br>
-            <br>
-            <span style='color: #ff3333;'>{perigee_text}</span>
+            {perigee_text}
             """
             output_div.innerHTML = stats_text.strip()
 
