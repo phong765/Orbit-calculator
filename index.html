@@ -218,7 +218,7 @@
             # Apogee and Perigee
             apogee = (h_norm ** 2 / (G * M)) / (1 - eccentricity)
             perigee = (h_norm ** 2 / (G * M)) / (1 + eccentricity)
-
+            semi_major_axis = (apogee + perigee) / 2
             cos_anomaly = (h_norm ** 2 / (G * M * r_norm) - 1) / eccentricity
 
         
@@ -245,6 +245,8 @@
             x_apsides = np.linspace(-apogee/1000, perigee/1000, 1000)
             y_apsides = eccen_vector[2] / np.linalg.norm(eccen_horizontal) * x_apsides
 
+            orbit_period= 2 * np.pi * np.sqrt(semi_major_axis ** 3 / (G * M))
+
 
             # ==========================================
             # 4. EXCEPTION & WARNING HANDLING
@@ -253,7 +255,7 @@
             if 0 <= perigee < (R * 1000 + atmos):
                 if perigee < R * 1000:
                     perigee_text = "Warning: Perigee is below the orbited body's surface. The object will collide with the body."
-                else:
+                elif perigee < (R * 1000 + atmos) and perigee > 0 and atmos != 0:
                     perigee_text = "Warning: Perigee is below the Kármán line (100 km). The object will enter the body's atmosphere."
 
             if perigee < 0 or apogee < 0:
@@ -269,6 +271,8 @@
             Line of Apsides angle: {np.degrees(np.arctan2(eccen_vector[2], np.linalg.norm(eccen_horizontal))):.2f}°<br>
             Apogee: {apogee/1000:.2f} km<br>
             Perigee: {perigee/1000:.2f} km<br>
+            Semi-Major Axis(apogee to perigee): {semi_major_axis/1000:.2f} km<br>
+            Orbital Period: {orbit_period / 3600:.2f} hours ({orbit_period / 86400:.2f} days)<br>
             {perigee_text}
             """
             output_div.innerHTML = stats_text.strip()
