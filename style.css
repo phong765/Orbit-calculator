@@ -117,22 +117,10 @@ input
     width: 300px;
     margin-bottom: 40px;
 }
-#footer
-{
-    position:absolute;
-    top:950px;
-    white-space: pre-line; 
-    font-family: monospace;
-    padding: 10px;
-    align-items: center;
-    border-radius: 10px;
-    width: 300px;
-    
-}
 #calculateButton
 {
     position: absolute;
-    top: 650px;
+    top: 720px;
     left: 400px;
     padding: 10px 20px;
     background-color: rgb(0, 0, 89);
@@ -141,4 +129,16 @@ input
     cursor: pointer;
     color: lightgray;
     font-weight: bold;
+}
+#footer
+{
+    position:absolute;
+    top:1200px;
+    white-space: pre-line; 
+    font-family: monospace;
+    padding: 10px;
+    align-items: center;
+    border-radius: 10px;
+    width: 300px;
+    
 }
