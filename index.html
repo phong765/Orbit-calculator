@@ -155,8 +155,10 @@
 
             if M == 5.972e24:
                 R = 6371  # Default Earth radius in kilometers
+                atmos= 100000  # Kármán line altitude in meters
             elif M == 7.342e22:
                 R = 1737  # Default Moon radius in kilometers
+                atmos= 0  # No significant atmosphere for the Moon
             elif M == 1.989e30:
                 R = 696340  # Default Sun radius in kilometers
             elif M == 3.301e23:
@@ -165,8 +167,10 @@
                 R = 6051  # Default Venus radius in kilometers 
             elif M == 6.39e23:
                 R = 3389  # Default Mars radius in kilometers
+                atmos= 125000  # Kármán line altitude in meters
             elif M == 1.898e27:
                 R = 69911  # Default Jupiter radius in kilometers
+                atmos= 0  # No significant atmosphere for Jupiter
             elif M == 5.683e26:
                 R = 58232  # Default Saturn radius in kilometers
             elif M == 8.681e25:
@@ -207,7 +211,7 @@
             # Apogee and Perigee
             apogee = (h_norm ** 2 / (G * M)) / (1 - eccentricity)
             perigee = (h_norm ** 2 / (G * M)) / (1 + eccentricity)
-
+            semi_major_axis = (apogee + perigee) / 2
             cos_anomaly = (h_norm ** 2 / (G * M * r_norm) - 1) / eccentricity
 
         
@@ -234,19 +238,21 @@
             x_apsides = np.linspace(-apogee/1000, perigee/1000, 1000)
             y_apsides = eccen_vector[2] / np.linalg.norm(eccen_horizontal) * x_apsides
 
+            orbit_period= 2 * np.pi * np.sqrt(semi_major_axis ** 3 / (G * M))
+
 
             # ==========================================
             # 4. EXCEPTION & WARNING HANDLING
             # ==========================================
             perigee_text = ""
-            if 0 <= perigee < (R * 1000 + 100000):
+            if 0 <= perigee < (R * 1000 + atmos):
                 if perigee < R * 1000:
-                    perigee_text = "Warning: Perigee is below the Earth's surface. The object will collide with the Earth."
-                else:
-                    perigee_text = "Warning: Perigee is below the Kármán line (100 km). The object will enter the Earth's atmosphere."
+                    perigee_text = "Warning: Perigee is below the orbited body's surface. The object will collide with the body."
+                elif perigee < (R * 1000 + atmos) and perigee > 0 and atmos != 0:
+                    perigee_text = "Warning: Perigee is below the Kármán line (100 km). The object will enter the body's atmosphere."
 
             if perigee < 0 or apogee < 0:
-                perigee_text = "Warning: The orbit is not valid. The object will escape the Earth's gravity."
+                perigee_text = "Warning: The orbit is not valid. The object will escape the orbited body's gravity."
 
             # ==========================================
             # 5. DYNAMIC UI RENDERING (HTML)
@@ -258,15 +264,17 @@
             Line of Apsides angle: {np.degrees(np.arctan2(eccen_vector[2], np.linalg.norm(eccen_horizontal))):.2f}°<br>
             Apogee: {apogee/1000:.2f} km<br>
             Perigee: {perigee/1000:.2f} km<br>
+            Semi-Major Axis(apogee to perigee): {semi_major_axis/1000:.2f} km<br>
+            Orbital Period: {orbit_period / 3600:.2f} hours ({orbit_period / 86400:.2f} days)<br>
             {perigee_text}
             """
             output_div.innerHTML = stats_text.strip()
 
             footer_text = """
-            The blue line represents the Earth's surface.<br>
+            The blue line represents the orbited body's surface.<br>
             The red line represents the object's orbit.<br>
-            The dashed cyan line represents the Kármán Line — the boundary between Earth's atmosphere and outer space.<br>
-            The dashed green line represents the Earth's equatorial plane.<br><br>
+            The dashed cyan line represents the Kármán Line — the boundary between the body's atmosphere and outer space.<br>
+            The dashed green line represents the body's equatorial plane.<br><br>
             <i>The result is an approximation and does not account for influences from other bodies, aerodynamic drag, and other perturbations.</i>
             """
             footer_div.innerHTML = footer_text.strip()
@@ -278,7 +286,7 @@
 
             # Top Plot: Orbit Path Map
             ax[0].plot(x, y, color="red", label="Orbit")
-            ax[0].plot(x_earth, y_earth, color="blue", label="Earth")
+            ax[0].plot(x_earth, y_earth, color="blue", label="Orbited Body")
             ax[0].plot(x_karman, y_karman, color="cyan", linestyle="--", label="Kármán line (100 km)")
             ax[0].set_title('Orbit Path')
             ax[0].set_xlabel('X (km)')
