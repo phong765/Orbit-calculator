@@ -7,7 +7,7 @@ A website that calculates the orbit of a satellite around a selected body. To te
 <img width="1902" height="867" alt="image" src="https://github.com/user-attachments/assets/a62e9ff7-2270-46d3-a005-eaa2113aab30" />
 <img width="1000" height="1000" alt="image" src="https://github.com/user-attachments/assets/279b881f-4ace-43c9-af46-3f53e73d411f" />
 
-
+My GitHub also includes the raw Python file for the calculation.
 
 ## Overview of the project
 
